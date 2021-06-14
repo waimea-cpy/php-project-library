@@ -1,7 +1,7 @@
 <?php
 /*=============================================================
  * Waimea College Standard PHP Library 
- * Version: 1.0 (June 2021)
+ * Version: 1.1 (June 2021)
  * 
  * Functions to:
  *   - Displaying debug info in a small panel
@@ -74,14 +74,32 @@ function showStatus( $message, $type=null ) {
 
 
 /*-------------------------------------------------------------
- * Show an error as script exits
+ * Show an error as script exits. If a common-bottom.php file
+ * exists (i.e. to wrap up the HTML / page layout), then this
+ * if first included
  *
  * Argument: $error - text of error to display
  *-------------------------------------------------------------*/
 function showErrorAndDie( $error ) {
     showStatus( $error, 'error' );
-    include 'common-bottom.php';
+    if( file_exists( 'common-bottom.php' ) ) include 'common-bottom.php';
     die();
+}
+
+
+/*-------------------------------------------------------------
+ * Adds a JS redirect to a given page after a given delay
+ *
+ * Argument: $delay    - an optional delay in ms (default 3000)
+ *           $location - an optional location (default index.php)
+ *-------------------------------------------------------------*/
+function addRedirect( $delay=3000, $location='index.php' ) {
+    if( !file_exists( $location ) ) $location = 'index.php';
+    echo '<script>';
+    echo   'setTimeout( function () { 
+                window.location.href = "'.$location.'"; 
+            }, '.$delay.' );';
+    echo '</script>';
 }
 
 

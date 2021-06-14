@@ -1,15 +1,18 @@
 /* COLOURS **********************************************************/
 
 :root {
-    --back: #eee;
-    --back-dark: #333;
-    --back-light: #fff;
+    --back:        #eee;
+    --back-dark:   #333;
+    --back-light:  #fff;
 
-    --text: #111;
+    --text:        #111;
     --text-invert: #fff;
 
-    --accent: #009688;
-    --border: #666;
+    --accent:      #009688;
+    --error:       #E53935;
+    --success:     #43A047;
+
+    --border:      #666;
 }
 
 
@@ -98,6 +101,27 @@ a.button:active {
     padding: 1rem;
     text-align: center;
     font-size: 0.8rem;
+}
+
+
+/* STATUS **********************************************************/
+
+.status {
+    display: block;
+    max-width: 20rem;
+    margin: 1rem auto;
+    padding: 0.5rem 1rem;
+    color: var(--text);
+}
+
+.status.error {
+    background: var(--error);
+    color: var(--text-invert);
+}
+
+.status.success {
+    background: var(--success);
+    color: var(--text-invert);
 }
 
 

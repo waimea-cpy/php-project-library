@@ -12,7 +12,7 @@
     // Are there any?
     if( count( $pets ) > 0 ) {
 
-        $DEBUG = 'WE HAVE PETS!';
+        $DEBUG = 'WE HAVE '.count( $pets ).' PETS!';
 
         echo '<section id="pets">';
 

@@ -6,9 +6,9 @@
 
     // Get the uploaded image file
     $image = $_FILES['image'];
-
+    // And up load the image, getting the file path
     $imagePath = uploadImage( $image, 'images/' );
-
+    // If we got here, it all went well
     showStatus( 'image uploaded successfully', 'success' );
 
     echo '<h2>Adding Pet to Database...</h2>';
@@ -18,12 +18,12 @@
     $species     = $_POST['species'];
     $description = $_POST['description'];
 
-    $sql = 'INSERT INTO pets (name, species, description, image)
-            VALUES (?, ?, ?, ?)';
-
-    $petID = modifyRecords( $sql, 'ssss', [$name, $species, $description, $imagePath] );
-
+    // Setup and run the query to add the pet
+    $sql = 'INSERT INTO pets (name, species, description, image) VALUES (?, ?, ?, ?)';
+    modifyRecords( $sql, 'ssss', [$name, $species, $description, $imagePath] );
+    // If we got here, it worked
     showStatus( $name.' the '.$species.' added', 'success' );
+    addRedirect( 2000, 'index.php' );
 
     include 'common-bottom.php';
 ?>

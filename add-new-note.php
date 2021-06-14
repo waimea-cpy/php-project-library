@@ -8,12 +8,12 @@
     $pet  = $_POST['pet'];
     $note = $_POST['note'];
 
-    $sql = 'INSERT INTO notes (pet, note)
-            VALUES (?, ?)';
-
-    $petID = modifyRecords( $sql, 'is', [$pet, $note] );
-
+    // Setup and run the query to add the pet
+    $sql = 'INSERT INTO notes (pet, note) VALUES (?, ?)';
+    modifyRecords( $sql, 'is', [$pet, $note] );
+    // If we got here, it worked
     showStatus( 'note added', 'success' );
+    addRedirect( 2000, 'index.php' );
 
     include 'common-bottom.php';
 ?>
