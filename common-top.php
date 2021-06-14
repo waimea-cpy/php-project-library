@@ -19,6 +19,7 @@
                 <ul>
                     <li><a href="index.php">Home</a></li>
                     <li><a href="form-new-pet.php">Add Pet</a></li>
+                    <li><a href="form-search.php">Search</a></li>
                 </ul>
             </nav>
 

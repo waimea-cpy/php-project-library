@@ -2,9 +2,7 @@
     require_once 'common-functions.php';
     require_once 'common-top.php';
 
-    if( !isset( $_GET['pet'] ) || empty( $_GET['pet'] ) ) {
-        showErrorAndDie( 'unknown pet ID' );
-    }
+    if( !isset( $_GET['pet'] ) || empty( $_GET['pet'] ) ) showErrorAndDie( 'unknown pet ID' );
 
     $petID = $_GET['pet'];
 ?>

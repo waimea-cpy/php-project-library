@@ -2,17 +2,28 @@
     include 'common-functions.php';
     include 'common-top.php';
 
+    echo '<h2>Search Results</h2>';
+
+    // Was a search term provided?
+    if( !isset( $_GET['search'] ) || empty( $_GET['search'] ) ) showErrorAndDie( 'missing search term' );
+    // Yes, so get it
+    $search = $_GET['search'];
+
+    echo '<p>Searching for '.$search.'...';
+
+    // Add in wildcards
+    $search = '%'.$search.'%';
+
     // Get the pet records
     $sql = 'SELECT id, name, species, description, image
             FROM pets
+            WHERE name LIKE ? OR species LIKE ? OR description LIKE ?
             ORDER BY name ASC';
 
-    $pets = getRecords( $sql );
+    $pets = getRecords( $sql, 'sss', [$search, $search, $search] );
 
     // Are there any?
     if( count( $pets ) > 0 ) {
-
-        $DEBUG = 'WE HAVE PETS!';
 
         echo '<section id="pets">';
 
@@ -23,28 +34,6 @@
             echo   '<figure><img src="'.$pet['image'].'" alt="'.$pet['name'].'"></figure>';
             echo   '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
             echo   '<p>'.$pet['description'].'</p>';
-
-            echo   '<h4>Notes:</h4>';
-
-            // Now get the records from the linked table using the pet id
-            $id = $pet['id'];
-
-            $sql = 'SELECT note
-                    FROM notes
-                    WHERE pet=?
-                    ORDER BY id DESC';
-
-            $notes = getRecords( $sql, 'i', [$id] );
-
-            // Shpow them all
-            echo   '<ul>';
-            foreach( $notes as $note ) {
-                echo '<li>'.$note['note'];
-            }
-            echo   '</ul>';
-
-            echo   '<a class="button" href="form-new-note.php?pet='.$id.'">New Note</a>';
-
             echo '</div>';
         }
 
