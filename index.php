@@ -7,48 +7,33 @@
             FROM pets
             ORDER BY name ASC';
 
+    // We should get an array of records
     $pets = getRecords( $sql );
 
-    // Are there any?
+    // Are there any pet records?
     if( count( $pets ) > 0 ) {
-
-        $DEBUG = 'WE HAVE '.count( $pets ).' PETS!';
 
         echo '<section id="pets">';
 
         // Yes, so loop through them all
         foreach( $pets as $pet ) {
+
             // Show the data for each one
-            echo '<div class="pet">';
-            echo   '<figure><img src="'.$pet['image'].'" alt="'.$pet['name'].'"></figure>';
-            echo   '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
-            echo   '<p>'.$pet['description'].'</p>';
+            echo '<a class="pet" href="show-pet.php?id='.$pet['id'].'">';
+            echo   '<header>';
+            echo     '<figure><img src="'.$pet['image'].'" alt="'.$pet['name'].'"></figure>';
+            echo     '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
+            echo   '</header>';
 
-            echo   '<h4>Notes:</h4>';
-
-            // Now get the records from the linked table using the pet id
-            $id = $pet['id'];
-
-            $sql = 'SELECT note
-                    FROM notes
-                    WHERE pet=?
-                    ORDER BY id DESC';
-
-            $notes = getRecords( $sql, 'i', [$id] );
-
-            // Shpow them all
-            echo   '<ul>';
-            foreach( $notes as $note ) {
-                echo '<li>'.$note['note'];
-            }
-            echo   '</ul>';
-
-            echo   '<a class="button" href="form-new-note.php?pet='.$id.'">New Note</a>';
-
-            echo '</div>';
+            echo   '<div class="details">';
+            echo     '<p>'.$pet['description'].'</p>';
+            echo   '</div>';
+            echo '</a>';
         }
 
         echo '</section>';
+
+        $DEBUG = 'WE HAVE '.count( $pets ).' PETS!';
     }
     else {
         // No records retuned

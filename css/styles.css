@@ -1,18 +1,15 @@
 /* COLOURS **********************************************************/
 
 :root {
-    --back:        #eee;
-    --back-dark:   #333;
-    --back-light:  #fff;
+    --back:        #fff;
 
-    --text:        #111;
-    --text-invert: #fff;
+    --text:        #333;
 
-    --accent:      #009688;
-    --error:       #E53935;
-    --success:     #43A047;
+    --accent:      #3bf;
+    --error:       #e44;
+    --success:     #494;
 
-    --border:      #666;
+    --border:      #999;
 }
 
 
@@ -32,10 +29,11 @@ body {
     margin: 0;
     padding: 0;
     background: var(--back);
+    color: var(--text);
 }
 
 main {
-    padding: 1rem;
+    padding: 1.5rem;
     text-align: center;
     min-height: 75vh;
 }
@@ -44,14 +42,12 @@ main {
 /* HEADER **********************************************************/
 
 #mainheader {
-    background: var(--back-dark);
-    color: var(--text-invert);
     padding: 1rem;
-
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
 }
 
 #mainheader h1 {
@@ -76,24 +72,18 @@ main {
     gap: 1rem;
 }
 
-#mainmenu a,
-a.button {
+#mainmenu a {
     display: block;
     padding: 0.5rem 1rem;
-    margin: 0 0 0 auto;
-    width: max-content;
-    color: var(--accent);
-    background: var(--back);
+    color: var(--text);
+    background: var(--accent);
     text-decoration: none;
 }
 
-#mainmenu a:hover,
-#mainmenu a:active,
-a.button:hover,
-a.button:active {
-    color: var(--text-invert);
-    background: var(--accent);
+a {
+    color: var(--accent);
 }
+
 
 /* FOOTER **********************************************************/
 
@@ -108,20 +98,15 @@ a.button:active {
 
 .status {
     display: block;
-    max-width: 20rem;
-    margin: 1rem auto;
-    padding: 0.5rem 1rem;
     color: var(--text);
 }
 
 .status.error {
-    background: var(--error);
-    color: var(--text-invert);
+    color: var(--error);
 }
 
 .status.success {
-    background: var(--success);
-    color: var(--text-invert);
+    color: var(--success);
 }
 
 
@@ -134,38 +119,26 @@ a.button:active {
     gap: 1rem;
 }
 
-div.pet {
+.pet {
     width: 100%;
     max-width: 18rem;
-    border: 1px solid var(--border);
-    padding: 1rem;
-    background: var(--back-light);
     text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    text-decoration: none;
 }
 
-div.pet :is(h1, h2, h3, h4, p, ul) {
-    margin: 0;
-}
-
-div.pet figure {
+.pet figure {
     display: block;
     padding: 0;
     margin: 0;
     height: 10rem;
-    border: 1px solid var(--border);
 }
 
-div.pet figure img {
+.pet figure img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
-
-div.pet ul {
-    flex: 1;
 }
 
 
@@ -175,17 +148,13 @@ form {
     width: 100%;
     max-width: 20rem;
     margin: 1rem auto;
-    padding: 1rem;
-    border: 1px solid var(--border);
-    background: var(--back-light);
     text-align: left;
 }
 
 label {
     display: block;
-    color: var(--accent);
     font-size: 0.9rem;
-    margin: 1rem 0 0.2rem;
+    margin: 0.2rem 0;
 }
 
 input {
@@ -195,16 +164,9 @@ input {
     font-size: 1rem;
 }
 
-input[type=text] {
-    padding: 0.1rem 0.3rem;
-}
-
 input[type=submit] {
     margin: 1rem 0 0 auto;
     width: auto;
-    padding: 0.5rem;
-    color: var(--text-invert);
-    background: var(--accent);
-    border: none;
 }
+
 

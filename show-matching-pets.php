@@ -9,7 +9,7 @@
     // Yes, so get it
     $search = $_GET['search'];
 
-    echo '<p>Searching for '.$search.'...';
+    echo '<p>Searching for "'.$search.'"...';
 
     // Add in wildcards
     $search = '%'.$search.'%';
@@ -30,18 +30,23 @@
         // Yes, so loop through them all
         foreach( $pets as $pet ) {
             // Show the data for each one
-            echo '<div class="pet">';
-            echo   '<figure><img src="'.$pet['image'].'" alt="'.$pet['name'].'"></figure>';
-            echo   '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
-            echo   '<p>'.$pet['description'].'</p>';
-            echo '</div>';
+            echo '<a class="pet" href="show-pet.php?id='.$pet['id'].'">';
+            echo   '<header>';
+            echo     '<figure><img src="'.$pet['image'].'" alt="'.$pet['name'].'"></figure>';
+            echo     '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
+            echo   '</header>';
+
+            echo   '<div class="details">';
+            echo     '<p>'.$pet['description'].'</p>';
+            echo   '</div>';
+            echo '</a>';
         }
 
         echo '</section>';
     }
     else {
         // No records retuned
-        showStatus( 'There are no pets in the database' );
+        showStatus( 'No matching pets could be found' );
     }
 
     include 'common-bottom.php';
