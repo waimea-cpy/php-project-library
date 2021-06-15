@@ -267,11 +267,11 @@ function uploadFile( $file, $folder, $random=false ) {
  *
  * Arguments: $image  - a image object from a multi-part form
  *            $folder - the folder name for the upload
- *            $random - random filename flag (default: true)
+ *            $random - random filename flag (default: false)
  *
  * Returns: the full path of the uploaded file
  *-------------------------------------------------------------*/
-function uploadImage( $image, $folder, $random=true ) {
+function uploadImage( $image, $folder, $random=false ) {
 
     // Seperate out the image info
     $imageFilename = $image['name'];
