@@ -1,7 +1,7 @@
 <?php
 /*=============================================================
  * Waimea College Standard PHP Library 
- * Version: 1.2 (June 2021)
+ * Version: 1.3 (June 2021)
  * 
  * Functions to:
  *   - Displaying debug info in a small panel
@@ -26,7 +26,7 @@ function showDebugInfo() {
                        border-radius: 0.5rem 0 0 0.5rem; display: flex; gap: 1rem; 
                        overflow-x: hidden; overflow-y: auto; z-index: 999; cursor: pointer;"
                        onclick="this.style.width= this.style.width==\'auto\' ? \'1rem\' : \'auto\';">';
-    $debugInfo .= '<div style="writing-mode: sideways-lr; text-align: center; color: #ff0;">DEBUG INFO</div>';
+    $debugInfo .= '<div style="writing-mode: vertical-lr; text-align: center; color: #ff0;">DEBUG INFO</div>';
     $debugInfo .= '<pre style="margin: 0; font-size: 0.8rem; line-height: 0.8rem; text-align: left; ">';
 
     if( isset( $DEBUG )                               ) $debugInfo .=   'DEBUG: '.print_r( $DEBUG.PHP_EOL.PHP_EOL, True );
