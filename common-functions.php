@@ -1,7 +1,7 @@
 <?php
 /*=============================================================
  * Waimea College Standard PHP Library 
- * Version: 1.1 (June 2021)
+ * Version: 1.2 (June 2021)
  * 
  * Functions to:
  *   - Displaying debug info in a small panel
@@ -20,17 +20,20 @@
 function showDebugInfo() {
     global $DEBUG;
 
-    $debugInfo = '<div style="background: rgba(0,0,0,0.8); color: #fff; font-size: 18px; line-height: 1rem; position: fixed; right: 0; bottom: 1rem; padding: 0.5rem 1rem 0.5rem 0.25rem; width: 1rem; max-width: 95vw; max-height: 90vh; border-radius: 0.5rem 0 0 0.5rem; display: flex; gap: 1rem; overflow-x: hidden; overflow-y: auto; z-index: 999; cursor: pointer;"
+    $debugInfo = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; 
+                       font-size: 18px; line-height: 1rem; position: fixed; right: 0; bottom: 1rem; 
+                       padding: 0.5rem 1rem 0.5rem 0.25rem; width: 1rem; max-width: 95vw; max-height: 90vh; 
+                       border-radius: 0.5rem 0 0 0.5rem; display: flex; gap: 1rem; 
+                       overflow-x: hidden; overflow-y: auto; z-index: 999; cursor: pointer;"
                        onclick="this.style.width= this.style.width==\'auto\' ? \'1rem\' : \'auto\';">';
-
     $debugInfo .= '<div style="writing-mode: sideways-lr; text-align: center; color: #ff0;">DEBUG INFO</div>';
     $debugInfo .= '<pre style="margin: 0; font-size: 0.8rem; line-height: 0.8rem; text-align: left; ">';
 
-    if( isset( $DEBUG )                               ) $debugInfo .=   'DEBUG: '.print_r( $DEBUG,    True );
-    if( isset( $_POST )    && sizeof( $_POST )    > 0 ) $debugInfo .=    'POST: '.print_r( $_POST,    True );
-    if( isset( $_GET )     && sizeof( $_GET )     > 0 ) $debugInfo .=     'GET: '.print_r( $_GET,     True );
-    if( isset( $_FILES )   && sizeof( $_FILES )   > 0 ) $debugInfo .=   'FILES: '.print_r( $_FILES,   True );
-    if( isset( $_SESSION ) && sizeof( $_SESSION ) > 0 ) $debugInfo .= 'SESSION: '.print_r( $_SESSION, True );
+    if( isset( $DEBUG )                               ) $debugInfo .=   'DEBUG: '.print_r( $DEBUG.PHP_EOL.PHP_EOL, True );
+    if( isset( $_POST )    && sizeof( $_POST )    > 0 ) $debugInfo .=    'POST: '.print_r( $_POST,                 True );
+    if( isset( $_GET )     && sizeof( $_GET )     > 0 ) $debugInfo .=     'GET: '.print_r( $_GET,                  True );
+    if( isset( $_FILES )   && sizeof( $_FILES )   > 0 ) $debugInfo .=   'FILES: '.print_r( $_FILES,                True );
+    if( isset( $_SESSION ) && sizeof( $_SESSION ) > 0 ) $debugInfo .= 'SESSION: '.print_r( $_SESSION,              True );
 
     $debugInfo .= '</pre></div>';
 
