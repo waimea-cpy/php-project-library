@@ -1,7 +1,7 @@
 <?php
 /*=============================================================
  * Waimea College Standard PHP Library 
- * Version: 1.3 (June 2021)
+ * Version: 1.4 (June 2021)
  * 
  * Functions to:
  *   - Displaying debug info in a small panel
@@ -20,20 +20,36 @@
 function showDebugInfo() {
     global $DEBUG;
 
-    $debugInfo = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; 
-                       font-size: 18px; line-height: 1rem; position: fixed; right: 0; bottom: 1rem; 
-                       padding: 0.5rem 1rem 0.5rem 0.25rem; width: 1rem; max-width: 95vw; max-height: 90vh; 
-                       border-radius: 0.5rem 0 0 0.5rem; display: flex; gap: 1rem; 
-                       overflow-x: hidden; overflow-y: auto; z-index: 999; cursor: pointer;"
-                       onclick="this.style.width= this.style.width==\'auto\' ? \'1rem\' : \'auto\';">';
-    $debugInfo .= '<div style="writing-mode: vertical-lr; text-align: center; color: #ff0;">DEBUG INFO</div>';
-    $debugInfo .= '<pre style="margin: 0; font-size: 0.8rem; line-height: 0.8rem; text-align: left; ">';
+    $havePost    = isset( $_POST )    && sizeof( $_POST )    > 0;
+    $haveGet     = isset( $_GET )     && sizeof( $_GET )     > 0;
+    $haveFiles   = isset( $_FILES )   && sizeof( $_FILES )   > 0;
+    $haveSession = isset( $_SESSION ) && sizeof( $_SESSION ) > 0;
+    $haveDebug   = isset( $DEBUG );
+    
+    $haveInfo = $havePost || $haveGet || $haveFiles || $haveSession || $haveDebug;
 
-    if( isset( $DEBUG )                               ) $debugInfo .=   'DEBUG: '.print_r( $DEBUG.PHP_EOL.PHP_EOL, True );
-    if( isset( $_POST )    && sizeof( $_POST )    > 0 ) $debugInfo .=    'POST: '.print_r( $_POST,                 True );
-    if( isset( $_GET )     && sizeof( $_GET )     > 0 ) $debugInfo .=     'GET: '.print_r( $_GET,                  True );
-    if( isset( $_FILES )   && sizeof( $_FILES )   > 0 ) $debugInfo .=   'FILES: '.print_r( $_FILES,                True );
-    if( isset( $_SESSION ) && sizeof( $_SESSION ) > 0 ) $debugInfo .= 'SESSION: '.print_r( $_SESSION,              True );
+    $debugInfo = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; 
+                       font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; 
+                       padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; 
+                       border-radius: 10px 0 0 10px; display: flex; gap: 20px; auto; z-index: 999; 
+                       overflow-x: hidden; overflow-y: scrollbar-width: thin; 
+                       box-shadow: 0 0 5px 1px #00000040;"
+                       onclick="this.style.width= this.style.width==\'auto\' ? \'40px\' : \'auto\';">';
+    $debugInfo .= '<div style="writing-mode: vertical-lr; align-self: flex-end; cursor: pointer; color: ';
+    $debugInfo .= $haveInfo ? '#ff0' : '#666';
+    $debugInfo .= ';">DEBUG INFO</div>';
+    $debugInfo .= '<pre style="margin: 0; font-size: 16px; line-height: 16px; text-align: left; ">';
+
+    if( $haveInfo ) {
+        if( $haveDebug   ) $debugInfo .=   'DEBUG: '.print_r( $DEBUG,    True ).PHP_EOL.PHP_EOL;
+        if( $havePost    ) $debugInfo .=    'POST: '.print_r( $_POST,    True );
+        if( $haveGet     ) $debugInfo .=     'GET: '.print_r( $_GET,     True );
+        if( $haveFiles   ) $debugInfo .=   'FILES: '.print_r( $_FILES,   True );
+        if( $haveSession ) $debugInfo .= 'SESSION: '.print_r( $_SESSION, True );
+    }
+    else {
+        $debugInfo .= 'NONE';
+    }
 
     $debugInfo .= '</pre></div>';
 

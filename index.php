@@ -34,6 +34,7 @@
         echo '</section>';
 
         $DEBUG = 'WE HAVE '.count( $pets ).' PETS!';
+        // $DEBUG = $pets;
     }
     else {
         // No records retuned
