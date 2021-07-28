@@ -1,7 +1,7 @@
 <?php
 /*=============================================================
  * Waimea College Standard PHP Library 
- * Version: 1.4 (June 2021)
+ * Version: 1.5 (July 2021)
  * 
  * Functions to:
  *   - Displaying debug info in a small panel
@@ -113,7 +113,10 @@ function showErrorAndDie( $error ) {
  *           $location - an optional location (default index.php)
  *-------------------------------------------------------------*/
 function addRedirect( $delay=3000, $location='index.php' ) {
-    if( !file_exists( $location ) ) $location = 'index.php';
+    // Strip off any GET parameters to get the filename
+    $file = strtok( $location, '?' ); 
+
+    if( !file_exists( $file ) ) $location = 'index.php';
     echo '<script>';
     echo   'setTimeout( function () { 
                 window.location.href = "'.$location.'"; 
