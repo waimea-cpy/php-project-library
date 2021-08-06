@@ -1,7 +1,7 @@
 <?php
 /*=============================================================
  * Waimea College Standard PHP Library 
- * Version: 1.5 (July 2021)
+ * Version: 1.6 (August 2021)
  * 
  * Functions to:
  *   - Displaying debug info in a small panel
@@ -150,13 +150,13 @@ function getRecords( $sql, $format=null, $params=null ) {
     $query = $link->prepare( $sql );
     if( !$query ) showErrorAndDie( 'preparing database query: '.$link->error );
 
-    // do we have data and a format for the prepared statement?
+    // Do we have data and a format for the prepared statement?
     if( $format && $params && strlen( $format ) == count( $params ) ) {
         // Yes, so add in the data to the query
         $query->bind_param( $format, ...$params );
     }
 
-    // RUn the query
+    // Run the query
     $query->execute();
     if( $query->error ) showErrorAndDie( 'running the database query: '.$query->error );
 
@@ -200,11 +200,11 @@ function modifyRecords( $sql, $format=null, $params=null ) {
     $query = $link->prepare( $sql );
     if( !$query ) showErrorAndDie( 'preparing database query: '.$link->error );
 
-    // Do we have data to bind into the prepared statement?
-    if( !$format || !$params || strlen( $format ) != count( $params ) ) showErrorAndDie( 'mismatched data parameters' );
-    
-    // Yes, so add in the data to the query
-    $query->bind_param( $format, ...$params );
+    // Do we have data and a format for the prepared statement?
+    if( $format && $params && strlen( $format ) == count( $params ) ) {
+        // Yes, so add in the data to the query
+        $query->bind_param( $format, ...$params );
+    }
 
     // Run the query
     $query->execute();
