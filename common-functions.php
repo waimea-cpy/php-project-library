@@ -1,7 +1,7 @@
 <?php
 /*=============================================================
  * Waimea College Standard PHP Library 
- * Version: 1.6 (August 2021)
+ * Version: 1.7 (August 2021)
  * 
  * Functions to:
  *   - Displaying debug info in a small panel
@@ -28,13 +28,8 @@ function showDebugInfo() {
     
     $haveInfo = $havePost || $haveGet || $haveFiles || $haveSession || $haveDebug;
 
-    $debugInfo = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; 
-                       font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; 
-                       padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; 
-                       border-radius: 10px 0 0 10px; display: flex; gap: 20px; auto; z-index: 999; 
-                       overflow-x: hidden; overflow-y: scrollbar-width: thin; 
-                       box-shadow: 0 0 5px 1px #00000040;"
-                       onclick="this.style.width= this.style.width==\'auto\' ? \'40px\' : \'auto\';">';
+    $debugInfo = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; border-radius: 10px 0 0 10px; display: flex; gap: 20px; z-index: 999; overflow-x: hidden; box-shadow: 0 0 5px 1px #00000040;" ';
+    $debugInfo .= 'onclick="this.style.width= this.style.width==\'auto\' ? \'40px\' : \'auto\';">';
     $debugInfo .= '<div style="writing-mode: vertical-lr; align-self: flex-end; cursor: pointer; color: ';
     $debugInfo .= $haveInfo ? '#ff0' : '#666';
     $debugInfo .= ';">DEBUG INFO</div>';
