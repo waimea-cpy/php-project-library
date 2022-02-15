@@ -1,77 +1,61 @@
 <?php
 /*=============================================================
+ *
  * Waimea College Standard PHP Library 
- * Version: 1.4 (June 2021)
+ * Steve Copley
+ * Digital Technologies Dept.
+ * 
+ * Version: 2.0 (February 2021)
  * 
  * Functions to:
- *   - Displaying debug info in a small panel
  *   - Connect to MySQL server databases
  *   - Run queries to obtain or modify data in a MySQL DB
+ *   - Handle errors with the MySQL operations gracefully
  *   - Upload files / images to the server
+ *   - Displaying debug info / messages
+ * 
+ *------------------------------------------------------------- 
+ * History:
+ * 
+ *  2.0 (2022-02-16) - Code cleanup, new DB config file format, more defaults
+ *  1.7 (2021-08-23) - Fixed some CSS bugs in the debug panel
+ *  1.6 (2021-07-06) - Fixed a bug in the modifyRecords function
+ *  1.5 (2021-07-28) - Fixed a bug in the redirect function for GET URLS
+ *  1.4 (2021-06-23) - Moved demo to its own folder
+ *                   - Fixed bug with DEBUG arrays / strings
+ *  1.3 (2021-06-15) - Fixed a debug tag issue with vertical text in Chrome
+ *                   - Tweaked debug info funt and newlines in output
+ *                   - Added default to image upload for non-random names
+ *                   - Simplified theme for demo. Added pets details
+ *  1.2 (2021-06-15) - Added redirect function and staus message styling
+ *  1.1 (2021-06-14) - Added a basic search example
+ *  1.0 (2021-06-14) - Initial version
  *=============================================================*/
-
-
-/*-------------------------------------------------------------
- * Display debug info at bottom right of window (shows on hover)
- * for the standard PHP arrays: GET / POST / FILE / SESSION, as
- * well as the contents of a global $DEBUG variable which can
- * be set to any value when debugging code.
- *-------------------------------------------------------------*/
-function showDebugInfo() {
-    global $DEBUG;
-
-    $havePost    = isset( $_POST )    && sizeof( $_POST )    > 0;
-    $haveGet     = isset( $_GET )     && sizeof( $_GET )     > 0;
-    $haveFiles   = isset( $_FILES )   && sizeof( $_FILES )   > 0;
-    $haveSession = isset( $_SESSION ) && sizeof( $_SESSION ) > 0;
-    $haveDebug   = isset( $DEBUG );
-    
-    $haveInfo = $havePost || $haveGet || $haveFiles || $haveSession || $haveDebug;
-
-    $debugInfo = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; 
-                       font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; 
-                       padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; 
-                       border-radius: 10px 0 0 10px; display: flex; gap: 20px; auto; z-index: 999; 
-                       overflow-x: hidden; overflow-y: scrollbar-width: thin; 
-                       box-shadow: 0 0 5px 1px #00000040;"
-                       onclick="this.style.width= this.style.width==\'auto\' ? \'40px\' : \'auto\';">';
-    $debugInfo .= '<div style="writing-mode: vertical-lr; align-self: flex-end; cursor: pointer; color: ';
-    $debugInfo .= $haveInfo ? '#ff0' : '#666';
-    $debugInfo .= ';">DEBUG INFO</div>';
-    $debugInfo .= '<pre style="margin: 0; font-size: 16px; line-height: 16px; text-align: left; ">';
-
-    if( $haveInfo ) {
-        if( $haveDebug   ) $debugInfo .=   'DEBUG: '.print_r( $DEBUG,    True ).PHP_EOL.PHP_EOL;
-        if( $havePost    ) $debugInfo .=    'POST: '.print_r( $_POST,    True );
-        if( $haveGet     ) $debugInfo .=     'GET: '.print_r( $_GET,     True );
-        if( $haveFiles   ) $debugInfo .=   'FILES: '.print_r( $_FILES,   True );
-        if( $haveSession ) $debugInfo .= 'SESSION: '.print_r( $_SESSION, True );
-    }
-    else {
-        $debugInfo .= 'NONE';
-    }
-
-    $debugInfo .= '</pre></div>';
-
-    echo $debugInfo;
-}
 
 
 /*-------------------------------------------------------------
  * Connect to MySQL database
  *
- * Requires: The username, password and database details in 
- *           text files withon the same directory
+ * Requires: The host, username, password and database details in 
+ *           a config .ini file with the following fields...
+ *             host="_______"  (the db host, e.g. localhost)
+ *             user="_______"  (the MySQL username)
+ *             pass="_______"  (the MySQL password)
+ *             name="_______"  (the database to connect to)
+ *
+ * Argument: $iniFile - filename of the config .ini file
+ *                      defaults to .db.ini within same directory
  *
  * Returns: the mysqli database connection object
  *-------------------------------------------------------------*/
-function connectToDB() {
+function connectToDB( $iniFile='.db.ini' ) {
 
-    $user = file_get_contents( '.username.txt' ); // DB Username
-    $pass = file_get_contents( '.password.txt' ); // DB Password
-    $db   = file_get_contents( '.database.txt' ); // Database to connect to
+    $config = parse_ini_file( $iniFile, true );  // Load config values from file
 
-    return new mysqli( 'localhost', $user, $pass, $db );       
+    return new mysqli( $config['host'],
+                       $config['user'],
+                       $config['pass'],
+                       $config['name'] );       
 }
 
 
@@ -93,15 +77,17 @@ function showStatus( $message, $type=null ) {
 
 
 /*-------------------------------------------------------------
- * Show an error as script exits. If a common-bottom.php file
- * exists (i.e. to wrap up the HTML / page layout), then this
- * if first included
+ * Show an error as script exits. If an ending file is provided
+ * and exists (i.e. to wrap up the HTML / page layout), then
+ * this is first included
  *
- * Argument: $error - text of error to display
+ * Argument: $error  - text of error to display
+ *           $ending - file to include after error text
+ *                     (defaults to 'common-bottom.php')
  *-------------------------------------------------------------*/
-function showErrorAndDie( $error ) {
+function showErrorAndDie( $error, $ending='common-bottom.php' ) {
     showStatus( $error, 'error' );
-    if( file_exists( 'common-bottom.php' ) ) include 'common-bottom.php';
+    if( file_exists( $ending ) ) include $ending;
     die();
 }
 
@@ -113,7 +99,10 @@ function showErrorAndDie( $error ) {
  *           $location - an optional location (default index.php)
  *-------------------------------------------------------------*/
 function addRedirect( $delay=3000, $location='index.php' ) {
-    if( !file_exists( $location ) ) $location = 'index.php';
+    // Strip off any GET parameters to get the filename
+    $file = strtok( $location, '?' ); 
+
+    if( !file_exists( $file ) ) $location = 'index.php';
     echo '<script>';
     echo   'setTimeout( function () { 
                 window.location.href = "'.$location.'"; 
@@ -141,21 +130,21 @@ function getRecords( $sql, $format=null, $params=null ) {
 
     // Connect to the DB
     $link = connectToDB();
-    if( $link->connect_error ) showErrorAndDie( 'connecting to the database: '.$link->connect_error );
+    if( $link->connect_error ) showErrorAndDie( 'Connecting to the database: '.$link->connect_error );
 
     // Setup the DB query to gather summative data
     $query = $link->prepare( $sql );
-    if( !$query ) showErrorAndDie( 'preparing database query: '.$link->error );
+    if( !$query ) showErrorAndDie( 'Preparing database query: '.$link->error );
 
-    // do we have data and a format for the prepared statement?
+    // Do we have data and a format for the prepared statement?
     if( $format && $params && strlen( $format ) == count( $params ) ) {
         // Yes, so add in the data to the query
         $query->bind_param( $format, ...$params );
     }
 
-    // RUn the query
+    // Run the query
     $query->execute();
-    if( $query->error ) showErrorAndDie( 'running the database query: '.$query->error );
+    if( $query->error ) showErrorAndDie( 'Running the database query: '.$query->error );
 
     // Get the result set
     $result = $query->get_result();
@@ -191,21 +180,21 @@ function modifyRecords( $sql, $format=null, $params=null ) {
 
     // Connect to the DB
     $link = connectToDB();
-    if( $link->connect_error ) showErrorAndDie( 'connecting to the database: '.$link->connect_error );
+    if( $link->connect_error ) showErrorAndDie( 'Connecting to the database: '.$link->connect_error );
 
     // Setup the DB query to gather summative data
     $query = $link->prepare( $sql );
-    if( !$query ) showErrorAndDie( 'preparing database query: '.$link->error );
+    if( !$query ) showErrorAndDie( 'Preparing database query: '.$link->error );
 
-    // Do we have data to bind into the prepared statement?
-    if( !$format || !$params || strlen( $format ) != count( $params ) ) showErrorAndDie( 'mismatched data parameters' );
-    
-    // Yes, so add in the data to the query
-    $query->bind_param( $format, ...$params );
+    // Do we have data and a format for the prepared statement?
+    if( $format && $params && strlen( $format ) == count( $params ) ) {
+        // Yes, so add in the data to the query
+        $query->bind_param( $format, ...$params );
+    }
 
     // Run the query
     $query->execute();
-    if( $query->error ) showErrorAndDie( 'running the database query: '.$query->error );
+    if( $query->error ) showErrorAndDie( 'Running the database query: '.$query->error );
 
     // Get the new ID of any INSERT query with auto-inc. key (will be 0 otherwise)
     $newID = $link->insert_id;
@@ -246,7 +235,7 @@ function uploadFile( $file, $folder, $random=false ) {
     $fileSize     = $file['size'];
 
     // Check image file size is not too large (2MB max on server)
-    if( $fileError == 1 || $fileSize > 2000000 ) showErrorAndDie( 'the file is too large (2MB max)' );
+    if( $fileError == 1 || $fileSize > 2000000 ) showErrorAndDie( 'The file is too large (2MB max)' );
 
     if( $random ) {
         // Build the path to save the file to
@@ -264,11 +253,11 @@ function uploadFile( $file, $folder, $random=false ) {
     $targetFilePath = $folder.$targetFilename;  // Piece together the path
 
     // Check if the file is already on server (possible if not a random filename)
-    if( file_exists( $targetFilePath ) ) showErrorAndDie( 'a file with that name already exists' );
+    if( file_exists( $targetFilePath ) ) showErrorAndDie( 'A file with that name already exists' );
 
     // Attempt to save the file to the upload folder
     $uploadSuccess = move_uploaded_file( $fileTempName, $targetFilePath );
-    if( !$uploadSuccess ) showErrorAndDie( 'problem uploading file' );
+    if( !$uploadSuccess ) showErrorAndDie( 'Problem uploading file' );
 
     // Return the full path of the uploaded file
     return $targetFilePath;
@@ -300,20 +289,63 @@ function uploadImage( $image, $folder, $random=false ) {
     $imageSize     = $image['size'];
 
     // Check image file size is not too large (2MB max on server)
-    if( $imageError == 1 || $imageSize > 2000000 ) showErrorAndDie( 'the image file is too large (2MB max)' );
+    if( $imageError == 1 || $imageSize > 2000000 ) showErrorAndDie( 'The image file is too large (2MB max)' );
 
     // Check if image is an actual image
     $validImage = getimagesize( $imageTempName );
-    if( !$validImage ) showErrorAndDie( 'the file does not contain image data' );
+    if( !$validImage ) showErrorAndDie( 'The file does not contain image data' );
 
     // Check the image is of a suitable type
     if( $imageType != 'image/png' &&
         $imageType != 'image/jpeg' &&
         $imageType != 'image/gif' &&
-        $imageType != 'image/webp' ) showErrorAndDie( 'only JPEG, JFIF, WEBP, PNG or GIF images are allowed' );
+        $imageType != 'image/webp' ) showErrorAndDie( 'Only JPEG, JFIF, WEBP, PNG or GIF images are allowed' );
 
     return uploadFile( $image, $folder, $random );
 }
+
+
+
+/*-------------------------------------------------------------
+ * Display debug info at bottom right of window (shows on hover)
+ * for the standard PHP arrays: GET / POST / FILE / SESSION, as
+ * well as the contents of a global $DEBUG variable which can
+ * be set to any value when debugging code.
+ *-------------------------------------------------------------*/
+function showDebugInfo() {
+    global $DEBUG;
+
+    $havePost    = isset( $_POST )    && sizeof( $_POST )    > 0;
+    $haveGet     = isset( $_GET )     && sizeof( $_GET )     > 0;
+    $haveFiles   = isset( $_FILES )   && sizeof( $_FILES )   > 0;
+    $haveSession = isset( $_SESSION ) && sizeof( $_SESSION ) > 0;
+    $haveDebug   = isset( $DEBUG );
+    
+    $haveInfo = $havePost || $haveGet || $haveFiles || $haveSession || $haveDebug;
+
+    $debugInfo  = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; border-radius: 10px 0 0 10px; display: flex; gap: 20px; z-index: 999; overflow-x: hidden; box-shadow: 0 0 5px 1px #00000040;" ';
+    $debugInfo .= 'onclick="this.style.width= this.style.width==\'auto\' ? \'40px\' : \'auto\';">';
+    $debugInfo .= '<div style="writing-mode: vertical-lr; align-self: flex-end; cursor: pointer; color: ';
+    $debugInfo .= $haveInfo ? '#ff0' : '#666';
+    $debugInfo .= ';">DEBUG INFO</div>';
+    $debugInfo .= '<pre style="margin: 0; font-size: 16px; line-height: 16px; text-align: left; ">';
+
+    if( $haveInfo ) {
+        if( $haveDebug   ) $debugInfo .=   'DEBUG: '.print_r( $DEBUG,    True ).PHP_EOL.PHP_EOL;
+        if( $havePost    ) $debugInfo .=    'POST: '.print_r( $_POST,    True );
+        if( $haveGet     ) $debugInfo .=     'GET: '.print_r( $_GET,     True );
+        if( $haveFiles   ) $debugInfo .=   'FILES: '.print_r( $_FILES,   True );
+        if( $haveSession ) $debugInfo .= 'SESSION: '.print_r( $_SESSION, True );
+    }
+    else {
+        $debugInfo .= 'NONE';
+    }
+
+    $debugInfo .= '</pre></div>';
+
+    echo $debugInfo;
+}
+
 
 
 ?>
