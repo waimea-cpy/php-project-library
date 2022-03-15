@@ -5,7 +5,7 @@
  * Steve Copley
  * Digital Technologies Dept.
  * 
- * Version: 2.0 (February 2021)
+ * Version: 2.1 (March 2022)
  * 
  * Functions to:
  *   - Connect to MySQL server databases
@@ -17,6 +17,7 @@
  *------------------------------------------------------------- 
  * History:
  * 
+ *  2.1 (2022-03-03) - Added session name to session info display
  *  2.0 (2022-02-16) - Code cleanup, new DB config file format, more defaults
  *  1.7 (2021-08-23) - Fixed some CSS bugs in the debug panel
  *  1.6 (2021-07-06) - Fixed a bug in the modifyRecords function
@@ -335,7 +336,8 @@ function showDebugInfo() {
         if( $havePost    ) $debugInfo .=    'POST: '.print_r( $_POST,    True );
         if( $haveGet     ) $debugInfo .=     'GET: '.print_r( $_GET,     True );
         if( $haveFiles   ) $debugInfo .=   'FILES: '.print_r( $_FILES,   True );
-        if( $haveSession ) $debugInfo .= 'SESSION: '.print_r( $_SESSION, True );
+        if( $haveSession ) $debugInfo .= 'SESSION: ('.print_r( session_name(), True ).') ';
+        if( $haveSession ) $debugInfo .=             print_r( $_SESSION, True );
     }
     else {
         $debugInfo .= 'NONE';
