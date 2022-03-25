@@ -5,20 +5,24 @@
  * Steve Copley
  * Digital Technologies Dept.
  * 
- * Version: 2.1 (March 2022)
+ * Version: 2.3 (March 2022)
  * 
  * Functions to:
  *   - Connect to MySQL server databases
  *   - Run queries to obtain or modify data in a MySQL DB
  *   - Handle errors with the MySQL operations gracefully
  *   - Upload files / images to the server
- *   - Displaying debug info / messages
+ *   - Check for a valid URL
+ *   - Display debug info / messages
  * 
  *------------------------------------------------------------- 
  * History:
  * 
+ *  2.3 (2022-03-21) - Added a function to check if a given URL is valid
+ *  2.2 (2022-03-15) - Added check for folder trailing slash in file upload
  *  2.1 (2022-03-03) - Added session name to session info display
  *  2.0 (2022-02-16) - Code cleanup, new DB config file format, more defaults
+ *
  *  1.7 (2021-08-23) - Fixed some CSS bugs in the debug panel
  *  1.6 (2021-07-06) - Fixed a bug in the modifyRecords function
  *  1.5 (2021-07-28) - Fixed a bug in the redirect function for GET URLS
@@ -251,7 +255,11 @@ function uploadFile( $file, $folder, $random=false ) {
         $targetFilename = strtolower( $filename );
     }
 
-    $targetFilePath = $folder.$targetFilename;  // Piece together the path
+    // Check if folder has trailing slash and add one if not
+    if( strcmp( $folder[-1], '/' ) !== 0 ) $folder .= '/';
+
+    // Piece together the final save path
+    $targetFilePath = $folder.$targetFilename;  
 
     // Check if the file is already on server (possible if not a random filename)
     if( file_exists( $targetFilePath ) ) showErrorAndDie( 'A file with that name already exists' );
@@ -306,6 +314,55 @@ function uploadImage( $image, $folder, $random=false ) {
 }
 
 
+/*-------------------------------------------------------------
+ * Check if a URL exists or not
+ *
+ * Requires: The host, username, password and database details in 
+ *           the same config .ini file used by connectToDB
+ *
+ * Argument: $url      - The URL of the file to check
+ *           $relative - true if URL is relative to current script 
+ *           $auth     - true if Basic Auth via user/pass required 
+ *           $iniFile  - filename of the config .ini file
+ *                       defaults to .db.ini within same directory
+ *
+ * Returns: true if URL exists, false otherwise
+ *-------------------------------------------------------------*/
+function urlExists( $url, $relative=true, $auth=true, $iniFile='.db.ini' ) {
+
+    $config = parse_ini_file( $iniFile, true );  // Load config values from file
+
+    // Setup the access context with authentication if required
+    stream_context_set_default( array( 
+        'http' => array( 
+            'method' => 'GET',
+            'header' => $auth ? 'Authorization: Basic '.base64_encode( $config['user'].':'.$config['pass'] ) : ''
+        ) 
+    ) );
+
+    if( $relative ) {
+        // Get HTTP(S)
+        $protocol = ((!empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
+        // Work out URL base path (no filename)
+        $path = $protocol.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']);
+        // Add it to the front of the URL
+        $url = $path.'/'.$url;
+    }
+
+    // Attempt to access URL
+    $headers = @get_headers( $url );
+    
+    // Nothing back?
+    if( $headers == false ) return false;
+
+    // Check status code
+    $status = substr( $headers[0], 9, 3 );
+
+    // 200-399 is good
+    return $status >= 200 && $status < 400;
+}
+
+
 
 /*-------------------------------------------------------------
  * Display debug info at bottom right of window (shows on hover)
@@ -336,7 +393,7 @@ function showDebugInfo() {
         if( $havePost    ) $debugInfo .=    'POST: '.print_r( $_POST,    True );
         if( $haveGet     ) $debugInfo .=     'GET: '.print_r( $_GET,     True );
         if( $haveFiles   ) $debugInfo .=   'FILES: '.print_r( $_FILES,   True );
-        if( $haveSession ) $debugInfo .= 'SESSION: ('.print_r( session_name(), True ).') ';
+        $debugInfo .= 'SESSION: ('.print_r( session_name(), True ).') ';
         if( $haveSession ) $debugInfo .=             print_r( $_SESSION, True );
     }
     else {
