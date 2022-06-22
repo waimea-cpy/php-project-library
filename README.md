@@ -9,5 +9,7 @@ The library provides functions for:
    * Adding / updating records in a MySQL database (using prepared statements with option data parameters)
    * Uploading files to the server
    * Uploading images specifically to the server (with appropriate validation)
+   * Downloading files from the server
+   * Checking if a given URL exists
 
 Included are files for a simple demo application that shows the library functions in use.
