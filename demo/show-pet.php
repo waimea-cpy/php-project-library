@@ -52,6 +52,7 @@
         echo   '</div>';
 
         echo   '<footer>';
+        echo     '<a class="button" href="download-pet.php?pet='.$petID.'">Download</a>';
         echo     '<a class="button" href="form-new-note.php?pet='.$petID.'">New Note</a>';
         echo   '</footer>';
 

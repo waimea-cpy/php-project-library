@@ -5,7 +5,7 @@
  * Steve Copley
  * Digital Technologies Dept.
  * 
- * Version: 2.3 (March 2022)
+ * Version: 2.5 (June 2022)
  * 
  * Functions to:
  *   - Connect to MySQL server databases
@@ -13,11 +13,14 @@
  *   - Handle errors with the MySQL operations gracefully
  *   - Upload files / images to the server
  *   - Check for a valid URL
+ *   - Configure file download output streams
  *   - Display debug info / messages
  * 
  *------------------------------------------------------------- 
  * History:
  * 
+ *  2.5 (2022-06-22) - Added functions to support file downloads
+ *  2.4 (2022-06-20) - Image uploading now allows SVGs
  *  2.3 (2022-03-21) - Added a function to check if a given URL is valid
  *  2.2 (2022-03-15) - Added check for folder trailing slash in file upload
  *  2.1 (2022-03-03) - Added session name to session info display
@@ -300,15 +303,18 @@ function uploadImage( $image, $folder, $random=false ) {
     // Check image file size is not too large (2MB max on server)
     if( $imageError == 1 || $imageSize > 2000000 ) showErrorAndDie( 'The image file is too large (2MB max)' );
 
-    // Check if image is an actual image
-    $validImage = getimagesize( $imageTempName );
-    if( !$validImage ) showErrorAndDie( 'The file does not contain image data' );
+    // Check if image is an actual image (excluding SVG which are text files)
+    if( $imageType != 'image/svg+xml' ) {
+        $validImage = getimagesize( $imageTempName );
+        if( !$validImage ) showErrorAndDie( 'The file does not contain image data' );
+    }
 
     // Check the image is of a suitable type
-    if( $imageType != 'image/png' &&
+    if( $imageType != 'image/svg+xml' &&
+        $imageType != 'image/png' &&
         $imageType != 'image/jpeg' &&
         $imageType != 'image/gif' &&
-        $imageType != 'image/webp' ) showErrorAndDie( 'Only JPEG, JFIF, WEBP, PNG or GIF images are allowed' );
+        $imageType != 'image/webp' ) showErrorAndDie( 'Only JPEG, JFIF, WEBP, PNG, GIF and SVG images are allowed' );
 
     return uploadFile( $image, $folder, $random );
 }
@@ -362,6 +368,49 @@ function urlExists( $url, $relative=true, $auth=true, $iniFile='.db.ini' ) {
     return $status >= 200 && $status < 400;
 }
 
+
+/*-------------------------------------------------------------
+ * Setup an output stream to write to for a file download
+ *
+ * Argument: $filename - The download filename, no extension
+ *           $type     - The download file type, text-based
+ *                       txt  - plain text
+ *                       csv  - CSV data
+ *                       json - JSON data
+ * 
+ * Note: regardless of the type, you still have to output the
+ *       actual data in the appropriate format using fputs(), 
+ *       fputcsv(), json_encode(), etc. 
+ *
+ * Returns: the output stream file handle
+ *-------------------------------------------------------------*/
+function prepareDownload( $filename='data', $type='txt' ) {
+    $type = strtolower( $type );
+    
+        if( $type == 'txt'  ) $mimetype = 'text/plain';
+    elseif( $type == 'csv'  ) $mimetype = 'text/csv';
+    elseif( $type == 'json' ) $mimetype = 'application/json';
+    else showErrorAndDie( 'Invalid data type' );
+
+    header( 'Content-Type: '.$mimetype.'; charset=utf-8' );
+    header( 'Content-Disposition: attachment; filename='.$filename.'.'.$type );
+    header( 'Pragma: no-cache' );
+    header( 'Expires: 0' );
+    
+    $handle = fopen( 'php://output', 'w' );
+
+    return $handle;
+}
+
+
+/*-------------------------------------------------------------
+ * Close an output stream for a file download
+ *
+ * Argument: $handle - The output stream handle
+ *-------------------------------------------------------------*/
+function finaliseDownload( $handle ) {
+    fclose( $handle );
+}
 
 
 /*-------------------------------------------------------------

@@ -92,7 +92,6 @@ main :is(h1,h2,h3,h4) {
 a.button {
     display: block;
     padding: 0.5rem 1rem;
-    margin: 0 0 0 auto;
     width: max-content;
     color: var(--accent);
     background: var(--back);
@@ -208,6 +207,9 @@ a.pet:hover {
 
 
 .pet footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
     padding: 0 1rem 1rem;
 }
 
