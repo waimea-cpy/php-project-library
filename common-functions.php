@@ -5,7 +5,7 @@
  * Steve Copley
  * Digital Technologies Dept.
  * 
- * Version: 2.5 (June 2022)
+ * Version: 2.6 (August 2022)
  * 
  * Functions to:
  *   - Connect to MySQL server databases
@@ -19,6 +19,9 @@
  *------------------------------------------------------------- 
  * History:
  * 
+ *  2.6 (2022-08-10) - More robust error checking / feedback for get/update
+ *                     records. Plus can now just pass a single data variable
+ *                     without needing to place it into an array
  *  2.5 (2022-06-22) - Added functions to support file downloads
  *  2.4 (2022-06-20) - Image uploading now allows SVGs
  *  2.3 (2022-03-21) - Added a function to check if a given URL is valid
@@ -124,8 +127,8 @@ function addRedirect( $delay=3000, $location='index.php' ) {
  * 
  * Arguments: $sql - an SQL query string
  *            $format - an optional format string (e.g. 'ssii')
- *            $params - an optional array of data parameters to
- *                      bind into the query, matching the 
+ *            $params - an optional data value or  array of data
+ *                      to bind into the query, matching the 
  *                      format string above
  *
  * Returns: the an array of records
@@ -144,10 +147,15 @@ function getRecords( $sql, $format=null, $params=null ) {
     $query = $link->prepare( $sql );
     if( !$query ) showErrorAndDie( 'Preparing database query: '.$link->error );
 
+    // Check SQL, format and data all match up
+    checkQueryAndData( $sql, $format, $params );
+    
     // Do we have data and a format for the prepared statement?
-    if( $format && $params && strlen( $format ) == count( $params ) ) {
-        // Yes, so add in the data to the query
-        $query->bind_param( $format, ...$params );
+    if( $format && $params ) {
+        // Have we got an array of data? If so, decompose the array and bind in
+        if( is_array( $params ) ) $query->bind_param( $format, ...$params );
+        // Otherwise just bind in the single data value
+        else $query->bind_param( $format, $params );
     }
 
     // Run the query
@@ -178,8 +186,8 @@ function getRecords( $sql, $format=null, $params=null ) {
  *
  * Arguments: $sql - an SQL query string
  *            $format - an optional format string (e.g. 'ssii')
- *            $params - an optional array of data parameters to
- *                      bind into the query, matching the 
+ *            $params - an optional data value or  array of data
+ *                      to bind into the query, matching the 
  *                      format string above
  *
  * Returns: the new ID if an INSERT query, otherwise null
@@ -194,10 +202,15 @@ function modifyRecords( $sql, $format=null, $params=null ) {
     $query = $link->prepare( $sql );
     if( !$query ) showErrorAndDie( 'Preparing database query: '.$link->error );
 
+    // Check SQL, format and data all match up
+    checkQueryAndData( $sql, $format, $params );
+    
     // Do we have data and a format for the prepared statement?
-    if( $format && $params && strlen( $format ) == count( $params ) ) {
-        // Yes, so add in the data to the query
-        $query->bind_param( $format, ...$params );
+    if( $format && $params ) {
+        // Have we got an array of data? If so, decompose the array and bind in
+        if( is_array( $params ) ) $query->bind_param( $format, ...$params );
+        // Otherwise just bind in the single data value
+        else $query->bind_param( $format, $params );
     }
 
     // Run the query
@@ -213,6 +226,32 @@ function modifyRecords( $sql, $format=null, $params=null ) {
 
     // Return the ID of nay INSERTed record
     return $newID;
+}
+
+
+/*-------------------------------------------------------------
+ * Validates an SQL string, data format string and data value(s)
+ * quitting if a disceprency is found between them
+ *
+ * Arguments: $sql - an SQL query string
+ *            $format - a format string (e.g. 'ssii')
+ *            $params - a data value or array of data values
+ *-------------------------------------------------------------*/
+function checkQueryAndData( $sql, $format, $params ) {
+    // Find number of data markers (?) in $sql
+    $markerCount = substr_count( $sql, '?' );
+    // Find length of data types, if present
+    $formatCount = $format ? strlen( $format ) : 0;
+    // Find number of data items, if present
+    $dataCount = $params ? (is_array( $params ) ? count( $params ) : 1) : 0;
+
+    // Check if everything matches up
+    if( $markerCount != $formatCount || $markerCount != $dataCount ) showErrorAndDie( <<<EOD
+        Mismatch between number of data markers in SQL ('?' count: $markerCount), 
+        length of format string (length of '$format': $formatCount), 
+        and number of data values provided (data values: $dataCount)
+        EOD
+    );
 }
 
 
