@@ -5,20 +5,55 @@
  * Steve Copley
  * Digital Technologies Dept.
  * 
- * Version: 2.6 (August 2022)
+ * Version: 2.7 (March 2023)
  * 
  * Functions to:
- *   - Connect to MySQL server databases
+ * 
+ *   - Connect to MySQL server databases:
+ *        connectToDB()
+ *
  *   - Run queries to obtain or modify data in a MySQL DB
- *   - Handle errors with the MySQL operations gracefully
- *   - Upload files / images to the server
+ *        getRecords()
+ *        modifyRecords()
+ *
+ *   - Handle errors with the MySQL operations gracefully:
+ *        checkQueryAndData()
+ *
+ *   - Upload files / images to the server:
+ *        uploadFile()
+ *        uploadImage()
+ *
  *   - Check for a valid URL
- *   - Configure file download output streams
- *   - Display debug info / messages
+ *        urlExists()
+ *
+ *   - Configure file download output streams:
+ *        prepareDownload()
+ *        finaliseDownload()
+ *
+ *   - Convert plain text to HTML paragraphs:
+ *        text2paras()
+ *
+ *   - Format dates and times in various ways:
+ *        niceDate()
+ *        niceTime()
+ *        daysFromToday()
+ *
+ *   - Show status messages:
+ *        showStatus()
+ *        showErrorAndDie()
+ *
+ *   - Add a JS delayed redirect (e.g. after a status message):
+ *        addRedirect()
+ *
+ *   - Display debug info for $_SESSION, $_GET, $_POST, etc.:
+ *        showDebugInfo()
  * 
  *------------------------------------------------------------- 
  * History:
  * 
+ *  2.7 (2023-03-01) - Functions to convert dates to user-friendly formats
+ *                   - Function to convert text with line-breaks to HTML paras
+ *                   - Fixed tiny layout bug with showInfo panel
  *  2.6 (2022-08-10) - More robust error checking / feedback for get/update
  *                     records. Plus can now just pass a single data variable
  *                     without needing to place it into an array
@@ -67,58 +102,6 @@ function connectToDB( $iniFile='.db.ini' ) {
                        $config['user'],
                        $config['pass'],
                        $config['name'] );       
-}
-
-
-/*-------------------------------------------------------------
- * Show a suitably formatted status message
- *
- * Argument: $message - text of message to display
- *           $type    - an optional message type (e.g. 'success')
- *                      This prefixes the message and is also
- *                      added to the message as a class for 
- *                      styling purposes
- *-------------------------------------------------------------*/
-function showStatus( $message, $type=null ) {
-    $fullMessage = '';
-    if( $type ) $fullMessage = ucfirst( $type ).': ';
-    $fullMessage .= $message;
-    echo '<p class="status '.$type.'">'.$fullMessage.'</p>';
-}
-
-
-/*-------------------------------------------------------------
- * Show an error as script exits. If an ending file is provided
- * and exists (i.e. to wrap up the HTML / page layout), then
- * this is first included
- *
- * Argument: $error  - text of error to display
- *           $ending - file to include after error text
- *                     (defaults to 'common-bottom.php')
- *-------------------------------------------------------------*/
-function showErrorAndDie( $error, $ending='common-bottom.php' ) {
-    showStatus( $error, 'error' );
-    if( file_exists( $ending ) ) include $ending;
-    die();
-}
-
-
-/*-------------------------------------------------------------
- * Adds a JS redirect to a given page after a given delay
- *
- * Argument: $delay    - an optional delay in ms (default 3000)
- *           $location - an optional location (default index.php)
- *-------------------------------------------------------------*/
-function addRedirect( $delay=3000, $location='index.php' ) {
-    // Strip off any GET parameters to get the filename
-    $file = strtok( $location, '?' ); 
-
-    if( !file_exists( $file ) ) $location = 'index.php';
-    echo '<script>';
-    echo   'setTimeout( function () { 
-                window.location.href = "'.$location.'"; 
-            }, '.$delay.' );';
-    echo '</script>';
 }
 
 
@@ -452,6 +435,141 @@ function finaliseDownload( $handle ) {
 }
 
 
+
+/*-------------------------------------------------------------
+ * Convert any newlines in some given text to HTML <p>...</p>
+ *
+ * Argument: $text - the text to convert
+ * 
+ * Returns: a string full of HTML paragraphs, if any were found
+ *          a blank string otherwise
+ *-------------------------------------------------------------*/
+function text2paras( $text ) {
+    $paragraphs = explode( "\n", $text );
+
+    $paragraphsHTML = '';
+
+    foreach( $paragraphs as $para ) {
+        $trimmed = trim( $para );
+
+        if( !empty( $trimmed ) ) {
+            $paragraphsHTML .= '<p>'.$trimmed.'</p>';
+        }
+    }
+
+    return $paragraphsHTML;
+}
+
+
+
+/*-------------------------------------------------------------
+ * Convert a given timestamp in standard PHP/MySQL date/time
+ * format (YYYY-MM-DD HH:MM:SS) into a nicely formated date
+ *
+ * Arguments: $timestamp - string contgaining timestamp
+ *            $format - date format, defaults to D MMM YYYY
+ * 
+ * Returns: date string, using the given format
+ *-------------------------------------------------------------*/
+function niceDate( $timestamp, $format='j M Y' ) {
+    $date = new DateTime( $timestamp );
+    return $date->format( $format );
+}
+
+
+/*-------------------------------------------------------------
+ * Convert a given timestamp in standard PHP/MySQL date/time
+ * format (YYYY-MM-DD HH:MM:SS) into a nicely formated time
+ *
+ * Arguments: $timestamp - string contgaining timestamp
+ *            $format - time format, defaults to H:MMam/pm
+ * 
+ * Returns: date string, using the given format
+ *-------------------------------------------------------------*/
+function niceTime( $timestamp, $format='h:ia' ) {
+    $date = new DateTime( $timestamp );
+    return $date->format( $format );
+}
+
+
+/*-------------------------------------------------------------
+ * Convert a given timestamp in standard PHP/MySQL date/time
+ * format (YYYY-MM-DD HH:MM:SS) into relative number of days:
+ *    0 -> today
+ *   -1 -> yesterday
+ *   +1 -> tomorrow
+ *   -n -> n days ago
+ *   +n -> in n days
+ *
+ * Arguments: $timestamp - string contgaining timestamp
+ * 
+ * Returns: relative date string
+ *-------------------------------------------------------------*/
+function daysFromToday( $timestamp ) {
+    $date = new DateTime( $timestamp );
+    $today = new DateTime( 'today' );
+    $diff = $today->diff( $date );
+
+    if( $diff->days == 0 )                  return 'today';
+    if( $diff->invert && $diff->days == 1 ) return 'yesterday';
+    if( $diff->invert )                     return $diff->days.' days ago';
+    if( $diff->days == 1 )                  return 'tomorrow';
+                                            return 'in '.$diff->days.' days';
+}
+
+
+/*-------------------------------------------------------------
+ * Show a suitably formatted status message
+ *
+ * Argument: $message - text of message to display
+ *           $type    - an optional message type (e.g. 'success')
+ *                      This prefixes the message and is also
+ *                      added to the message as a class for 
+ *                      styling purposes
+ *-------------------------------------------------------------*/
+function showStatus( $message, $type=null ) {
+    $fullMessage = '';
+    if( $type ) $fullMessage = ucfirst( $type ).': ';
+    $fullMessage .= $message;
+    echo '<p class="status '.$type.'">'.$fullMessage.'</p>';
+}
+
+
+/*-------------------------------------------------------------
+ * Show an error as script exits. If an ending file is provided
+ * and exists (i.e. to wrap up the HTML / page layout), then
+ * this is first included
+ *
+ * Argument: $error  - text of error to display
+ *           $ending - file to include after error text
+ *                     (defaults to 'common-bottom.php')
+ *-------------------------------------------------------------*/
+function showErrorAndDie( $error, $ending='common-bottom.php' ) {
+    showStatus( $error, 'error' );
+    if( file_exists( $ending ) ) include $ending;
+    die();
+}
+
+
+/*-------------------------------------------------------------
+ * Adds a JS redirect to a given page after a given delay
+ *
+ * Argument: $delay    - an optional delay in ms (default 3000)
+ *           $location - an optional location (default index.php)
+ *-------------------------------------------------------------*/
+function addRedirect( $delay=3000, $location='index.php' ) {
+    // Strip off any GET parameters to get the filename
+    $file = strtok( $location, '?' ); 
+
+    if( !file_exists( $file ) ) $location = 'index.php';
+    echo '<script>';
+    echo   'setTimeout( function () { 
+                window.location.href = "'.$location.'"; 
+            }, '.$delay.' );';
+    echo '</script>';
+}
+
+
 /*-------------------------------------------------------------
  * Display debug info at bottom right of window (shows on hover)
  * for the standard PHP arrays: GET / POST / FILE / SESSION, as
@@ -469,9 +587,9 @@ function showDebugInfo() {
     
     $haveInfo = $havePost || $haveGet || $haveFiles || $haveSession || $haveDebug;
 
-    $debugInfo  = '<div style="font-family: sans-serif; background: rgba(0,0,0,0.8); color: #fff; font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; border-radius: 10px 0 0 10px; display: flex; gap: 20px; z-index: 999; overflow-x: hidden; box-shadow: 0 0 5px 1px #00000040;" ';
+    $debugInfo  = '<div style="box-sizing: border-box; font-family: system-ui, sans-serif; background: rgba(0,0,0,0.8); color: #fff; font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; border-radius: 10px 0 0 10px; display: flex; gap: 20px; z-index: 999; overflow-x: hidden; box-shadow: 0 0 5px 1px #00000040;" ';
     $debugInfo .= 'onclick="this.style.width= this.style.width==\'auto\' ? \'40px\' : \'auto\';">';
-    $debugInfo .= '<div style="writing-mode: vertical-lr; align-self: flex-end; cursor: pointer; color: ';
+    $debugInfo .= '<div style="box-sizing: inherit; padding: 0; writing-mode: vertical-lr; align-self: flex-end; cursor: pointer; color: ';
     $debugInfo .= $haveInfo ? '#ff0' : '#666';
     $debugInfo .= ';">DEBUG INFO</div>';
     $debugInfo .= '<pre style="margin: 0; font-size: 16px; line-height: 16px; text-align: left; ">';
