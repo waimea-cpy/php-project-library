@@ -1,14 +1,14 @@
 <?php
 /*=============================================================
  *
- * Waimea College Standard PHP Library 
+ * Waimea College Standard PHP Library
  * Steve Copley
  * Digital Technologies Dept.
- * 
- * Version: 2.7 (March 2023)
- * 
+ *
+ * Version: 2.8 (March 2023)
+ *
  * Functions to:
- * 
+ *
  *   - Connect to MySQL server databases:
  *        connectToDB()
  *
@@ -33,10 +33,12 @@
  *   - Convert plain text to HTML paragraphs:
  *        text2paras()
  *
- *   - Format dates and times in various ways:
+ *   - Format and manage dates and times in various ways:
  *        niceDate()
  *        niceTime()
  *        daysFromToday()
+ *        isToday()
+ *        isInPast()
  *
  *   - Show status messages:
  *        showStatus()
@@ -47,10 +49,12 @@
  *
  *   - Display debug info for $_SESSION, $_GET, $_POST, etc.:
  *        showDebugInfo()
- * 
- *------------------------------------------------------------- 
+ *
+ *-------------------------------------------------------------
  * History:
- * 
+ *
+ *  2.8 (2023-03-30) - Function to check if a given date is in the past
+ *                   - Function to check is a given date is today
  *  2.7 (2023-03-01) - Functions to convert dates to user-friendly formats
  *                   - Function to convert text with line-breaks to HTML paras
  *                   - Fixed tiny layout bug with showInfo panel
@@ -82,7 +86,7 @@
 /*-------------------------------------------------------------
  * Connect to MySQL database
  *
- * Requires: The host, username, password and database details in 
+ * Requires: The host, username, password and database details in
  *           a config .ini file with the following fields...
  *             host="_______"  (the db host, e.g. localhost)
  *             user="_______"  (the MySQL username)
@@ -101,23 +105,23 @@ function connectToDB( $iniFile='.db.ini' ) {
     return new mysqli( $config['host'],
                        $config['user'],
                        $config['pass'],
-                       $config['name'] );       
+                       $config['name'] );
 }
 
 
 /*-------------------------------------------------------------
  * Runs a given SELECT query on the MySQL database
- * 
+ *
  * Arguments: $sql - an SQL query string
  *            $format - an optional format string (e.g. 'ssii')
  *            $params - an optional data value or  array of data
- *                      to bind into the query, matching the 
+ *                      to bind into the query, matching the
  *                      format string above
  *
  * Returns: the an array of records
  *
- * Note: this potentially could lead to out-of-memory issues 
- *       with large data sets, but for low-use, small, 
+ * Note: this potentially could lead to out-of-memory issues
+ *       with large data sets, but for low-use, small,
  *       text-based data sets, it should be fine
  *-------------------------------------------------------------*/
 function getRecords( $sql, $format=null, $params=null ) {
@@ -132,7 +136,7 @@ function getRecords( $sql, $format=null, $params=null ) {
 
     // Check SQL, format and data all match up
     checkQueryAndData( $sql, $format, $params );
-    
+
     // Do we have data and a format for the prepared statement?
     if( $format && $params ) {
         // Have we got an array of data? If so, decompose the array and bind in
@@ -170,7 +174,7 @@ function getRecords( $sql, $format=null, $params=null ) {
  * Arguments: $sql - an SQL query string
  *            $format - an optional format string (e.g. 'ssii')
  *            $params - an optional data value or  array of data
- *                      to bind into the query, matching the 
+ *                      to bind into the query, matching the
  *                      format string above
  *
  * Returns: the new ID if an INSERT query, otherwise null
@@ -187,7 +191,7 @@ function modifyRecords( $sql, $format=null, $params=null ) {
 
     // Check SQL, format and data all match up
     checkQueryAndData( $sql, $format, $params );
-    
+
     // Do we have data and a format for the prepared statement?
     if( $format && $params ) {
         // Have we got an array of data? If so, decompose the array and bind in
@@ -230,8 +234,8 @@ function checkQueryAndData( $sql, $format, $params ) {
 
     // Check if everything matches up
     if( $markerCount != $formatCount || $markerCount != $dataCount ) showErrorAndDie( <<<EOD
-        Mismatch between number of data markers in SQL ('?' count: $markerCount), 
-        length of format string (length of '$format': $formatCount), 
+        Mismatch between number of data markers in SQL ('?' count: $markerCount),
+        length of format string (length of '$format': $formatCount),
         and number of data values provided (data values: $dataCount)
         EOD
     );
@@ -242,15 +246,15 @@ function checkQueryAndData( $sql, $format, $params ) {
  * Uploads a given file object to the server. The file object
  * is created by a multi-part form with a file upload field
  *
- * If required, a random 32 character filename is generated 
- * for the file to avoid file collisions, and the original 
+ * If required, a random 32 character filename is generated
+ * for the file to avoid file collisions, and the original
  * extension is added to this.
  *
  * Arguments: $file   - a file object from a multi-part form
  *            $folder - the folder name for the upload. Note
  *                      this must have appropriate permissions
  *                      and should end in a trailing /
- *            $random - an optional flag (default: false) to 
+ *            $random - an optional flag (default: false) to
  *                      indicate if a random filename is wanted
  *
  * Returns: the full path of the uploaded file
@@ -284,7 +288,7 @@ function uploadFile( $file, $folder, $random=false ) {
     if( strcmp( $folder[-1], '/' ) !== 0 ) $folder .= '/';
 
     // Piece together the final save path
-    $targetFilePath = $folder.$targetFilename;  
+    $targetFilePath = $folder.$targetFilename;
 
     // Check if the file is already on server (possible if not a random filename)
     if( file_exists( $targetFilePath ) ) showErrorAndDie( 'A file with that name already exists' );
@@ -301,7 +305,7 @@ function uploadFile( $file, $folder, $random=false ) {
 /*-------------------------------------------------------------
  * Uploads a given image object to the server. The image object
  * is created by a multi-part form with a file upload field
- * 
+ *
  * See the uploadFile() function notes for other info
  *
  * Compared to a normal file upload, more image-specific
@@ -345,12 +349,12 @@ function uploadImage( $image, $folder, $random=false ) {
 /*-------------------------------------------------------------
  * Check if a URL exists or not
  *
- * Requires: The host, username, password and database details in 
+ * Requires: The host, username, password and database details in
  *           the same config .ini file used by connectToDB
  *
  * Argument: $url      - The URL of the file to check
- *           $relative - true if URL is relative to current script 
- *           $auth     - true if Basic Auth via user/pass required 
+ *           $relative - true if URL is relative to current script
+ *           $auth     - true if Basic Auth via user/pass required
  *           $iniFile  - filename of the config .ini file
  *                       defaults to .db.ini within same directory
  *
@@ -361,11 +365,11 @@ function urlExists( $url, $relative=true, $auth=true, $iniFile='.db.ini' ) {
     $config = parse_ini_file( $iniFile, true );  // Load config values from file
 
     // Setup the access context with authentication if required
-    stream_context_set_default( array( 
-        'http' => array( 
+    stream_context_set_default( array(
+        'http' => array(
             'method' => 'GET',
             'header' => $auth ? 'Authorization: Basic '.base64_encode( $config['user'].':'.$config['pass'] ) : ''
-        ) 
+        )
     ) );
 
     if( $relative ) {
@@ -379,7 +383,7 @@ function urlExists( $url, $relative=true, $auth=true, $iniFile='.db.ini' ) {
 
     // Attempt to access URL
     $headers = @get_headers( $url );
-    
+
     // Nothing back?
     if( $headers == false ) return false;
 
@@ -399,16 +403,16 @@ function urlExists( $url, $relative=true, $auth=true, $iniFile='.db.ini' ) {
  *                       txt  - plain text
  *                       csv  - CSV data
  *                       json - JSON data
- * 
+ *
  * Note: regardless of the type, you still have to output the
- *       actual data in the appropriate format using fputs(), 
- *       fputcsv(), json_encode(), etc. 
+ *       actual data in the appropriate format using fputs(),
+ *       fputcsv(), json_encode(), etc.
  *
  * Returns: the output stream file handle
  *-------------------------------------------------------------*/
 function prepareDownload( $filename='data', $type='txt' ) {
     $type = strtolower( $type );
-    
+
         if( $type == 'txt'  ) $mimetype = 'text/plain';
     elseif( $type == 'csv'  ) $mimetype = 'text/csv';
     elseif( $type == 'json' ) $mimetype = 'application/json';
@@ -418,7 +422,7 @@ function prepareDownload( $filename='data', $type='txt' ) {
     header( 'Content-Disposition: attachment; filename='.$filename.'.'.$type );
     header( 'Pragma: no-cache' );
     header( 'Expires: 0' );
-    
+
     $handle = fopen( 'php://output', 'w' );
 
     return $handle;
@@ -440,7 +444,7 @@ function finaliseDownload( $handle ) {
  * Convert any newlines in some given text to HTML <p>...</p>
  *
  * Argument: $text - the text to convert
- * 
+ *
  * Returns: a string full of HTML paragraphs, if any were found
  *          a blank string otherwise
  *-------------------------------------------------------------*/
@@ -466,9 +470,9 @@ function text2paras( $text ) {
  * Convert a given timestamp in standard PHP/MySQL date/time
  * format (YYYY-MM-DD HH:MM:SS) into a nicely formated date
  *
- * Arguments: $timestamp - string contgaining timestamp
+ * Arguments: $timestamp - string containing timestamp
  *            $format - date format, defaults to D MMM YYYY
- * 
+ *
  * Returns: date string, using the given format
  *-------------------------------------------------------------*/
 function niceDate( $timestamp, $format='j M Y' ) {
@@ -481,14 +485,48 @@ function niceDate( $timestamp, $format='j M Y' ) {
  * Convert a given timestamp in standard PHP/MySQL date/time
  * format (YYYY-MM-DD HH:MM:SS) into a nicely formated time
  *
- * Arguments: $timestamp - string contgaining timestamp
+ * Arguments: $timestamp - string containing timestamp
  *            $format - time format, defaults to H:MMam/pm
- * 
+ *
  * Returns: date string, using the given format
  *-------------------------------------------------------------*/
 function niceTime( $timestamp, $format='h:ia' ) {
     $date = new DateTime( $timestamp );
     return $date->format( $format );
+}
+
+
+/*-------------------------------------------------------------
+ * Check if a given timestamp in standard PHP/MySQL date/time
+ * format (YYYY-MM-DD HH:MM:SS) is today
+ *
+ * Arguments: $timestamp - string containing timestamp
+ *
+ * Returns: true if is today, false otherwise
+ *-------------------------------------------------------------*/
+function isToday( $timestamp ) {
+    $date = new DateTime( $timestamp );
+    $today = new DateTime( 'today' );
+    $diff = $today->diff( $date );
+
+    return ($diff->days == 0);
+}
+
+
+/*-------------------------------------------------------------
+ * Check if a given timestamp in standard PHP/MySQL date/time
+ * format (YYYY-MM-DD HH:MM:SS) is in the past
+ *
+ * Arguments: $timestamp - string containing timestamp
+ *
+ * Returns: true if in past, false otherwise
+ *-------------------------------------------------------------*/
+function isInPast( $timestamp ) {
+    $date = new DateTime( $timestamp );
+    $today = new DateTime( 'today' );
+    $diff = $today->diff( $date );
+
+    return $diff->invert;
 }
 
 
@@ -501,8 +539,8 @@ function niceTime( $timestamp, $format='h:ia' ) {
  *   -n -> n days ago
  *   +n -> in n days
  *
- * Arguments: $timestamp - string contgaining timestamp
- * 
+ * Arguments: $timestamp - string containing timestamp
+ *
  * Returns: relative date string
  *-------------------------------------------------------------*/
 function daysFromToday( $timestamp ) {
@@ -524,7 +562,7 @@ function daysFromToday( $timestamp ) {
  * Argument: $message - text of message to display
  *           $type    - an optional message type (e.g. 'success')
  *                      This prefixes the message and is also
- *                      added to the message as a class for 
+ *                      added to the message as a class for
  *                      styling purposes
  *-------------------------------------------------------------*/
 function showStatus( $message, $type=null ) {
@@ -559,12 +597,12 @@ function showErrorAndDie( $error, $ending='common-bottom.php' ) {
  *-------------------------------------------------------------*/
 function addRedirect( $delay=3000, $location='index.php' ) {
     // Strip off any GET parameters to get the filename
-    $file = strtok( $location, '?' ); 
+    $file = strtok( $location, '?' );
 
     if( !file_exists( $file ) ) $location = 'index.php';
     echo '<script>';
-    echo   'setTimeout( function () { 
-                window.location.href = "'.$location.'"; 
+    echo   'setTimeout( function () {
+                window.location.href = "'.$location.'";
             }, '.$delay.' );';
     echo '</script>';
 }
@@ -584,7 +622,7 @@ function showDebugInfo() {
     $haveFiles   = isset( $_FILES )   && sizeof( $_FILES )   > 0;
     $haveSession = isset( $_SESSION ) && sizeof( $_SESSION ) > 0;
     $haveDebug   = isset( $DEBUG );
-    
+
     $haveInfo = $havePost || $haveGet || $haveFiles || $haveSession || $haveDebug;
 
     $debugInfo  = '<div style="box-sizing: border-box; font-family: system-ui, sans-serif; background: rgba(0,0,0,0.8); color: #fff; font-size: 18px; line-height: 1em; position: fixed; right: 0; bottom: 20px; padding: 10px 30px 10px 5px; width: 40px; max-width: 95vw; max-height: 90vh; border-radius: 10px 0 0 10px; display: flex; gap: 20px; z-index: 999; overflow-x: hidden; box-shadow: 0 0 5px 1px #00000040;" ';
