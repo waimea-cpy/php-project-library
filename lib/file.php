@@ -4,7 +4,7 @@
  * PHP File Utility Library
  * 
  * Steve Copley @ Digital Technologies Dept. Waimea College 
- * https://github.com/waimea-dt/php-library/lib/file.php
+ * https://github.com/waimea-dt/php-library/blob/main/lib/file.php
  *=====================================================================*/
 
 

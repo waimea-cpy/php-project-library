@@ -105,20 +105,16 @@ Example of use...
 
 ```php
 consoleGroupStart('NEW REQUEST');
-
-    consoleLog($url,    'Request URL');
-    consoleLog($method, 'Method');
-    consoleLog($type,   'Type');
-    consoleLog($route,  'Route');
-
-    consoleDivider();
-
-    if ($params)   consoleLog($params,   'Parameters');
-    if ($_GET)     consoleLog($_GET,     'GET Data');
-    if ($_POST)    consoleLog($_POST,    'POST Data');
-    if ($_FILES)   consoleLog($_FILES,   'FILES Data');
-    if ($_SESSION) consoleLog($_SESSION, 'SESSION Data');
-
+  consoleLog($url,    'Request URL');
+  consoleLog($method, 'Method');
+  consoleLog($type,   'Type');
+  consoleLog($route,  'Route');
+  consoleDivider();
+  if ($params)   consoleLog($params,   'Parameters');
+  if ($_GET)     consoleLog($_GET,     'GET Data');
+  if ($_POST)    consoleLog($_POST,    'POST Data');
+  if ($_FILES)   consoleLog($_FILES,   'FILES Data');
+  if ($_SESSION) consoleLog($_SESSION, 'SESSION Data');
 consoleGroupEnd();
 ```
 
@@ -136,13 +132,13 @@ Configure file download output streams:
 Example of use...
 
 ```php
-    // Setup the output stream
-    $output = prepareDownload( 'info', 'txt' );
-    // Add the info
-    fputs( $output, 'Name: '.$thing['name'].PHP_EOL );
-    fputs( $output, 'Desc: '.$thing['desc'].PHP_EOL );
-    // And close the stream
-    finaliseDownload( $output );
+// Setup the output stream
+$output = prepareDownload( 'info', 'txt' );
+// Add the info
+fputs( $output, 'Name: '.$thing['name'].PHP_EOL );
+fputs( $output, 'Desc: '.$thing['desc'].PHP_EOL );
+// And close the stream
+finaliseDownload( $output );
 ```
 
 ---

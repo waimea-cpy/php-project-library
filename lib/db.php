@@ -4,7 +4,7 @@
  * Database Utility Library
  * 
  * Steve Copley @ Digital Technologies Dept. Waimea College 
- * https://github.com/waimea-dt/php-library/lib/db.php
+ * https://github.com/waimea-dt/php-library/blob/main/lib/db.php
  *=====================================================================*/
 
 require_once 'debug.php';
