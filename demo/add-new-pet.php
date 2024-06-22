@@ -1,29 +1,43 @@
 <?php
-    include 'common-functions.php';
-    include 'common-top.php';
+    require_once '../lib/db.php';
 
-    echo '<h2>Uploading Pet Image...</h2>';
+    consoleLog($_POST, 'POST Data');
+    consoleLog($_FILES, 'FILES Data');
 
-    // Get the uploaded image file
-    $image = $_FILES['image'];
-    // And up load the image, getting the file path
-    $imagePath = uploadImage( $image, 'images/' );
-    // If we got here, it all went well
-    showStatus( 'image uploaded successfully', 'success' );
+    if(empty($_POST) && empty($_FILES)) {
+        consoleError('Image upload problem');
+        die ('There was a problem uploading the file (probably too large)');
+    }
 
-    echo '<h2>Adding Pet to Database...</h2>';
+    // Get image data and type of uploaded file
+    [
+        'data' => $imageData,
+        'type' => $imageType
+    ] = uploadedImageData($_FILES['image']);
 
     // Get the data from the form
     $name        = $_POST['name'];
     $species     = $_POST['species'];
+    $dob         = $_POST['dob'];
     $description = $_POST['description'];
 
-    // Setup and run the query to add the pet
-    $sql = 'INSERT INTO pets (name, species, description, image) VALUES (?, ?, ?, ?)';
-    modifyRecords( $sql, 'ssss', [$name, $species, $description, $imagePath] );
-    // If we got here, it worked
-    showStatus( $name.' the '.$species.' added', 'success' );
-    addRedirect( 2000, 'index.php' );
+    // Connect to the database
+    $db = connectToDB();
 
-    include 'common-bottom.php';
+    // Setup and run the query to add the pet
+    $query = 'INSERT INTO pets (name, species, dob, description, image_type, image_data) 
+                VALUES (?, ?, ?, ?, ?, ?)';
+
+    // Attempt to run the query
+    try {
+        $stmt = $db->prepare($query);
+        $stmt->execute([$name, $species, $dob, $description, $imageType, $imageData]);
+    }
+    catch (PDOException $e) {
+        consoleError($e->getMessage(), 'DB INSERT');
+        die('There was an error adding pet to the database');
+    }
+
+    // If we got here, it worked
+    header('location: index.php');
 ?>

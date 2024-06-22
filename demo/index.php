@@ -1,45 +1,55 @@
 <?php
-    include 'common-functions.php';
-    include 'common-top.php';
+    require_once '../lib/db.php';
+    require_once '../lib/text.php';
+    require_once '../lib/date.php';
+    
+    include 'partials/top.php';
+
+    // Connect to the database
+    $db = connectToDB();
 
     // Get the pet records
-    $sql = 'SELECT id, name, species, description, image
-            FROM pets
-            ORDER BY name ASC';
+    $query = 'SELECT id, name, species, dob, description
+                FROM pets
+                ORDER BY name ASC';
 
-    // We should get an array of records
-    $pets = getRecords( $sql );
+    // Attempt to run the query. We should get an array of records
+    try {
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $pets = $stmt->fetchAll();
+    }
+    catch (PDOException $e) {
+        consoleError($e->getMessage(), 'DB SELECT');
+        die('There was an error getting pets from the database');
+    }
 
     // Are there any pet records?
-    if( count( $pets ) > 0 ) {
+    if (count($pets) > 0) {
 
-        echo '<section id="pets">';
+        echo '<section id="pet-list">';
 
         // Yes, so loop through them all
-        foreach( $pets as $pet ) {
+        foreach ($pets as $pet) {
 
             // Show the data for each one
-            echo '<a class="pet" href="show-pet.php?id='.$pet['id'].'">';
-            echo   '<header>';
-            echo     '<figure><img src="'.$pet['image'].'" alt="'.$pet['name'].'"></figure>';
-            echo     '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
-            echo   '</header>';
-
-            echo   '<div class="details">';
-            echo     '<p>'.$pet['description'].'</p>';
+            echo '<article>';
+            echo   '<figure><img src="pet-image.php?id='.$pet['id'].'" alt="'.$pet['name'].'"></figure>';
+            echo   '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
+            echo   '<p>Born: <strong>'.formattedDate($pet['dob']).'</strong> ('.ageInYears($pet['dob']).')</p>';
+            echo   '<div class="clip">';
+            echo     text2paras($pet['description']);
             echo   '</div>';
-            echo '</a>';
+            echo   '<a href="show-pet.php?id='.$pet['id'].'"><button>Find Out More...</button></a>';
+            echo '</article>';
         }
 
         echo '</section>';
-
-        $DEBUG = 'WE HAVE '.count( $pets ).' PETS!';
-        // $DEBUG = $pets;
     }
     else {
         // No records retuned
-        showStatus( 'There are no pets in the database' );
+        echo '<p>There are no pets in the database.</p>';
     }
 
-    include 'common-bottom.php';
+    include 'partials/bottom.php';
 ?>

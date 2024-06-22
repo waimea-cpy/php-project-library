@@ -1,51 +1,79 @@
 <?php 
 
-    require_once 'common-functions.php';
+    require_once '../lib/db.php';
+    require_once '../lib/file.php';
+    require_once '../lib/date.php';
 
-    // Was a pet ID provided?
-    if( !isset( $_GET['pet'] ) || empty( $_GET['pet'] ) ) showErrorAndDie( 'Missing pet ID' );
-    // Yes, so get it
-    $petID = $_GET['pet'];
+    // Get the pet ID from URL
+    $petID = $_GET['id'] ?? null;
+    if (!$petID) {
+        consoleLog($petID, 'Pet ID');
+        die('Unknown pet ID');
+    }
 
-    // Get the pet record
-    $sql = 'SELECT name, species, description, image
-            FROM pets
-            WHERE id=?';
+    // ----------------------------------------------------------
+    // Connect to the database
+    $db = connectToDB();
 
-    $pets = getRecords( $sql, 'i', [$petID] );
+    // Get the pet records
+    $query = 'SELECT name, species, dob, description
+                FROM pets 
+                WHERE id=?';
 
-    // Did we get a record?
-    if( count( $pets ) != 1 ) showErrorAndDie( 'Invalid pet ID' );
+    // Attempt to run the query. We should get a single record
+    try {
+        $stmt = $db->prepare($query);
+        $stmt->execute([$petID]);
+        $pet = $stmt->fetch();
+    }
+    catch (PDOException $e) {
+        consoleError($e->getMessage(), 'DB SELECT');
+        die('There was an error getting pet from the database');
+    }
 
-    // Yes, so get the pet info
-    $pet = $pets[0];
+    // Check we have a record
+    if (!$pet) die('No pet found for given ID');
 
+    // ----------------------------------------------------------
     // Now get the notes using the pet id
-    $sql = 'SELECT note
-            FROM notes
-            WHERE pet=?
-            ORDER BY id DESC';
+    $query = 'SELECT note, timestamp
+                FROM notes
+                WHERE pet=?
+                ORDER BY timestamp DESC';
 
-    $notes = getRecords( $sql, 'i', [$petID] );
+    // Attempt to run the query. We should get an array of records
+    try {
+        $stmt = $db->prepare($query);
+        $stmt->execute([$petID]);
+        $notes = $stmt->fetchAll();
+    }
+    catch (PDOException $e) {
+        consoleError($e->getMessage(), 'DB SELECT');
+        die('There was an error getting pet notes from the database');
+    }
 
 
     // ----------------------------------------------------------
     // Send the data to the user
 
     // Setup the output stream
-    $output = prepareDownload( 'petdata', 'txt' );
+    $filename = $pet['name'] . ' Info (' . date('Y-m-d H-i-s') . ')';
+    $output = prepareDownload( $filename, 'txt' );
 
     // Add the pet info
-    fputs( $output, 'Name: '.$pet['name'].PHP_EOL );
-    fputs( $output, 'Species: '.$pet['species'].PHP_EOL );
-    fputs( $output, 'Description: '.$pet['description'].PHP_EOL );
+    fputs( $output, 'Name: '    . $pet['name']    . PHP_EOL );
+    fputs( $output, 'Species: ' . $pet['species'] . PHP_EOL );
+    fputs( $output, 'Born: '    . formattedDate($pet['species']) . PHP_EOL );
+    fputs( $output, 'Description: '     . PHP_EOL );
+    fputs( $output, $pet['description'] . PHP_EOL );
     
     // And the notes
     fputs( $output, PHP_EOL );
-    fputs( $output, 'Notes: '.PHP_EOL );
+    fputs( $output, 'Notes: ' . PHP_EOL );
 
     foreach( $notes as $note ) {
-        fputs( $output, ' --- '.$note['note'].PHP_EOL );
+        fputs( $output, '   - '  . $note['note'] );
+        fputs( $output, ' (posted ' . formattedDate($note['timestamp']) . ')' . PHP_EOL );
     }
 
     // And close the stream

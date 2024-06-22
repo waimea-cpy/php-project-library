@@ -1,68 +1,100 @@
 <?php
-    include 'common-functions.php';
-    include 'common-top.php';
+    require_once '../lib/db.php';
+    require_once '../lib/text.php';
+    require_once '../lib/date.php';
 
-    // Was a pet ID provided?
-    if( !isset( $_GET['id'] ) || empty( $_GET['id'] ) ) showErrorAndDie( 'missing pet ID' );
-    // Yes, so get it
-    $petID = $_GET['id'];
+    include 'partials/top.php';
 
-    // Get the pet record
-    $sql = 'SELECT name, species, description, image
-            FROM pets
-            WHERE id=?';
+    // Get the pet ID from URL
+    $petID = $_GET['id'] ?? null;
+    if (!$petID) die('Unknown pet ID');
 
-    $pets = getRecords( $sql, 'i', [$petID] );
+    consoleLog($petID, 'Pet ID');
 
-    // Did we get a record?
-    if( count( $pets ) > 0 ) {
+    // Connect to the database
+    $db = connectToDB();
 
-        // Yes, so show the pet
-        $pet = $pets[0];
+    // Get the pet records
+    $query = 'SELECT name, species, dob, description 
+                FROM pets 
+                WHERE id=?';
 
-        echo '<section id="pets">';
+    // Attempt to run the query. We should get a single record
+    try {
+        $stmt = $db->prepare($query);
+        $stmt->execute([$petID]);
+        $pet = $stmt->fetch();
+    }
+    catch (PDOException $e) {
+        consoleError($e->getMessage(), 'DB SELECT');
+        die('There was an error getting pet from the database');
+    }
 
-        echo '<div class="pet">';
+    // Check we have a record
+    if (!$pet) die('No pet found for given ID');
 
-        echo   '<header>';
-        echo     '<figure><img src="'.$pet['image'].'" alt="'.$pet['name'].'"></figure>';
-        echo     '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
-        echo   '</header>';
+    echo '<section id="pet-list">';
 
-        echo   '<div class="details">';
-        echo     '<p>'.$pet['description'].'</p>';
+    echo   '<article>';
+    echo     '<figure><img src="pet-image.php?id='.$petID.'" alt="'.$pet['name'].'"></figure>';
+    echo     '<h3>'.$pet['name'].' the '.$pet['species'].'</h3>';
+    echo     '<p>Born: <strong>'.formattedDate($pet['dob']).'</strong> ('.ageInYears($pet['dob']).')</p>';
+    echo   '</article>';
 
-        echo     '<h4>Notes:</h4>';
+    echo   '<article>';
+    echo     '<h4>Description</h4>';
+    echo     '<div>';
+    echo       text2paras($pet['description']);
+    echo     '</div>';
+    echo   '</article>';
 
-        // Now get the records from the linked table using the pet id
-        $sql = 'SELECT note
+    echo   '<article>';
+    echo     '<h4>Notes</h4>';
+
+    // Now get the records from the linked table using the pet id
+    $query = 'SELECT note, timestamp
                 FROM notes
                 WHERE pet=?
-                ORDER BY id DESC';
+                ORDER BY timestamp DESC';
 
-        $notes = getRecords( $sql, 'i', [$petID] );
+    // Attempt to run the query. We should get an array of records
+    try {
+        $stmt = $db->prepare($query);
+        $stmt->execute([$petID]);
+        $notes = $stmt->fetchAll();
+    }
+    catch (PDOException $e) {
+        consoleError($e->getMessage(), 'DB SELECT');
+        die('There was an error getting pet notes from the database');
+    }
 
+    // Check we have a record
+    if (count($notes) == 0) {
+        echo '<p>No notes.</p>';
+    }
+    else {
         // Show them all
         echo     '<ul>';
         foreach( $notes as $note ) {
-            echo '<li>'.$note['note'];
+            echo '<li>' . $note['note'];
+            echo '<br><small>';
+            echo 'Posted at ' . formattedTime($note['timestamp']);
+            echo ' on ' . formattedDate($note['timestamp']);
+            echo ' (' . daysFromToday($note['timestamp']) . ')';
+            echo '</small>';
         }
         echo     '</ul>';
-
-        echo   '</div>';
-
-        echo   '<footer>';
-        echo     '<a class="button" href="download-pet.php?pet='.$petID.'">Download</a>';
-        echo     '<a class="button" href="form-new-note.php?pet='.$petID.'">New Note</a>';
-        echo   '</footer>';
-
-        echo '</div>';
-        echo '</section>';
-    }
-    else {
-        // No records retuned
-        showStatus( 'No pet with the given ID could be found', 'error' );
     }
 
-    include 'common-bottom.php';
+    echo     '<a class="button" href="form-new-note.php?pet='.$petID.'"><button>New Note</button></a>';
+    echo   '</article>';
+
+    echo '</section>';
+
+    echo '<a class="button" href="download-pet.php?id='.$petID.'"><button>Download this Information</button></a>';
+
+    include 'partials/bottom.php';
+
+    showDebugInfo();
+
 ?>

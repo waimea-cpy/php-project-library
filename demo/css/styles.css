@@ -1,172 +1,62 @@
-/* COLOURS **********************************************************/
-
-:root {
-    --back:        #fff;
-
-    --text:        #333;
-
-    --accent:      #3bf;
-    --error:       #e44;
-    --success:     #494;
-
-    --border:      #999;
-}
-
-
-/* LAYOUT **********************************************************/
-
-* {
-    box-sizing: border-box;
-}
-
-html {
-    font-family: sans-serif;
-    font-size: 22px;
-    margin: 0;
-}
-
 body {
-    margin: 0;
-    padding: 0;
-    background: var(--back);
-    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 main {
-    padding: 1.5rem;
-    text-align: center;
-    min-height: 75vh;
+    flex: 1;
 }
 
-
-/* HEADER **********************************************************/
 
 #mainheader {
-    padding: 1rem;
     display: flex;
-    flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
 }
-
-#mainheader h1 {
-    margin: 0;
-}
-
-
-@media screen and (min-width: 480px) {
-    #mainheader {
-        flex-direction: row;
-    }
-}
-
-
-/* NAV & LINKS **********************************************************/
-
-#mainmenu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    gap: 1rem;
-}
-
-#mainmenu a {
-    display: block;
-    padding: 0.5rem 1rem;
-    color: var(--text);
-    background: var(--accent);
-    text-decoration: none;
-}
-
-a {
-    color: var(--accent);
-}
-
-
-/* FOOTER **********************************************************/
 
 #mainfooter {
-    padding: 1rem;
     text-align: center;
-    font-size: 0.8rem;
 }
 
-
-/* STATUS **********************************************************/
-
-.status {
+main > a,
+main > article {
     display: block;
-    color: var(--text);
+    width: max-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.status.error {
-    color: var(--error);
-}
-
-.status.success {
-    color: var(--success);
-}
-
-
-/* PETS **********************************************************/
-
-#pets {
+#pet-list {
     display: flex;
+    gap: 2rem;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1rem;
 }
 
-.pet {
-    width: 100%;
-    max-width: 18rem;
-    text-align: left;
-    padding: 1rem;
-    border: 1px solid var(--border);
-    text-decoration: none;
+article {
+    flex: 1;
+    min-width: 20rem;
+    max-width: 25rem;
 }
 
-.pet figure {
+article figure {
     display: block;
     padding: 0;
     margin: 0;
-    height: 10rem;
+    height: 15rem;
 }
 
-.pet figure img {
+article figure img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center 30%;
 }
 
-
-/* FORMS **********************************************************/
-
-form {
-    width: 100%;
-    max-width: 20rem;
-    margin: 1rem auto;
-    text-align: left;
-}
-
-label {
-    display: block;
-    font-size: 0.9rem;
-    margin: 0.2rem 0;
-}
-
-input {
-    display: block;
-    width: 100%;
+article > .clip {
+    max-height: 10rem;
+    overflow-y: hidden;
     margin-bottom: 1rem;
-    font-size: 1rem;
+    mask-image: linear-gradient(180deg, #000 60%, transparent);
 }
-
-input[type=submit] {
-    margin: 1rem 0 0 auto;
-    width: auto;
-}
-
-
